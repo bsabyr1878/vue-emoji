@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <h1 class="title">
-      Homepage
+      hello there!
     </h1>
   </div>
 </template>

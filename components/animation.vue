@@ -7,28 +7,23 @@
 <script>
 import { mapState } from 'vuex'
 import * as THREE from 'three'
-// import { TimelineMax } from 'gsap'
+import { TimelineMax } from 'gsap'
 // const OrbitControls = require('three-orbit-controls')(THREE)
 
 export default {
   data: () => ({
-    state: [],
-    material: {},
-    geometry: {}
+    material: {}
   }),
   computed: mapState(['page']),
   watch: {
     page: function (newValue, oldValue) {
-      // const vm = this
-      // vm.geometry.attributes.target = vm.state[newValue]
-      // vm.geometry.needsUpdate = true
-      // const tl = new TimelineMax({ onComplete: () => {
-      //   vm.material.uniforms.blend.value = 0
-      //   vm.geometry.attributes.source = vm.geometry.attributes.target
-      //   vm.geometry.needsUpdate = true
-      // }
-      // })
-      // tl.to(vm.material.uniforms.blend, 0.5, { value: 1 }, 0)
+      const vm = this
+      const tl = new TimelineMax()
+      if (newValue === vm.material.uniforms.target.page) {
+        tl.to(vm.material.uniforms.blend, 0.5, { value: 1 }, 0)
+      } else {
+        tl.to(vm.material.uniforms.blend, 0.5, { value: 0 }, 0)
+      }
     }
   },
   mounted() {
@@ -57,8 +52,8 @@ export default {
         uniforms: {
           time: { type: 'f', value: 0 },
           blend: { type: 'f', value: 0 },
-          original: { type: 't', value: new THREE.TextureLoader().load('/ok.png') }, // eslint-disable-line new-cap
-          target: { type: 't', value: new THREE.TextureLoader().load('/devil.png') } // eslint-disable-line new-cap
+          original: { type: 't', page: 'index', value: new THREE.TextureLoader().load('/est.png') }, // eslint-disable-line new-cap
+          target: { type: 't', page: 'about', value: new THREE.TextureLoader().load('/devil.png') } // eslint-disable-line new-cap
         },
         vertexShader: `varying vec2 vUv;
         varying vec3 vecPos;
@@ -71,16 +66,16 @@ export default {
         void main() {
           vUv = uv;
           v_position = position.xyz;
-          float roundblend = sin(3.1415926*blend);
-          float stepblend = clamp( 2.*(v_position.x + v_position.y) +3.*blend - 1., 0.,1.);
+          float roundblend = sin(3.1415926 * blend);
+          float stepblend = clamp(2. * (v_position.x + v_position.y) + 3. * blend - 1., 0., 1.);
 
           float originalR = texture2D(original,vUv).r;
           float targetR = texture2D(target,vUv).r;
 
-          v_position.z = 0.2* mix(originalR,targetR,stepblend) + roundblend*0.1*sin(v_position.x*10. + time/100.);
+          v_position.z = 0.2 * mix(originalR, targetR, stepblend) + roundblend * 0.1 * sin(v_position.x * 10. + time / 100.);
           
-          v_position.x = position.x + roundblend*0.1*sin(v_position.y +v_position.x + blend);
-          v_position.y = position.y + roundblend*0.1*sin(v_position.y +v_position.x + blend);
+          v_position.x = position.x + roundblend * 0.1 * sin(v_position.y + v_position.x + blend);
+          v_position.y = position.y + roundblend * 0.1 * sin(v_position.y + v_position.x + blend);
 
           vecPos = (modelViewMatrix * vec4(v_position, 1.0)).xyz;
           gl_Position = projectionMatrix * vec4(vecPos, 1.0);
@@ -94,24 +89,24 @@ export default {
         void main(void) {
           vec2 st = v_position.xy;
 
-          float koef = clamp(v_position.z/60.,0.,1.);
+          float koef = clamp(v_position.z / 60.,0.,1.);
 
-          vec3 color1 = vec3(1.,1.,1.);
-          vec3 color2 = vec3(1.,0.,0.);
+          vec3 color1 = vec3(1., 1., 1.);
+          vec3 color2 = vec3(1., 0., 0.);
 
-          vec3 color3 = mix(color1,color2,koef);
+          vec3 color3 = mix(color1, color2, koef);
 
-          vec2 grid = abs(fract(500.*st/4. - 0.5) - 0.5) / fwidth(500.*st/4.);
+          vec2 grid = abs(fract(500. * st / 4. - 0.5) - 0.5) / fwidth(500. * st / 4.);
           float color = min(grid.x, grid.y);
 
           gl_FragColor = vec4(color3,1. - color);
-          gl_FragColor = vec4(1.,0.,0.,1.);
+          gl_FragColor = vec4(1., 0., 0., 1.);
 
-          float stepblend = clamp(v_position.x + v_position.y +3.*blend - 1., 0.,1.);
-          vec4 originalC = texture2D(original,vUv);
-          vec4 targetC = texture2D(target,vUv);
-          vec4 result = originalC*(1. - stepblend) + targetC*stepblend;
-          gl_FragColor = result*(1. - color);
+          float stepblend = clamp(v_position.x + v_position.y + 3. * blend - 1., 0., 1.);
+          vec4 originalC = texture2D(original, vUv);
+          vec4 targetC = texture2D(target, vUv);
+          vec4 result = originalC * (1. - stepblend) + targetC * stepblend;
+          gl_FragColor = result * (1. - color);
         }`,
         alphaTest: 0.5,
         transparent: true
@@ -119,11 +114,12 @@ export default {
 
       const plane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1, 200, 200), vm.material)
       scene.add(plane)
-
       resize()
     }
 
     let time = 0
+    const ww = window.innerWidth
+    const wh = window.innerHeight
 
     function animate() {
       time++
@@ -138,8 +134,6 @@ export default {
       renderer.render(scene, camera)
     }
 
-    const ww = window.innerWidth
-    const wh = window.innerHeight
     function resize() {
       renderer.setSize(ww, wh)
       camera.aspect = ww / wh

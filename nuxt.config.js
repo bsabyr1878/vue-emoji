@@ -20,6 +20,12 @@ export default {
   */
   loading: { color: '#fff' },
   /*
+   * Router
+   */
+  router: {
+    middleware: 'pages'
+  },
+  /*
   ** Global CSS
   */
   css: [

@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <h1 class="title">
-      About
+      general kenobi!
     </h1>
   </div>
 </template>
